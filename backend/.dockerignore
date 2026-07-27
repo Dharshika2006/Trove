@@ -1,0 +1,35 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Data
+data/
+uploads/
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (frontend build artifacts that might be in root)
+node_modules/
+
+# Docker
+.dockerignore

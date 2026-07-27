@@ -1,0 +1,55 @@
+# ============================================
+# Trove - Multi-Agent Research Assistant
+# ============================================
+
+# Environment & Secrets
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Data (generated at runtime)
+data/
+uploads/
+*.db
+
+# Node.js
+node_modules/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker volumes
+docker-data/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
