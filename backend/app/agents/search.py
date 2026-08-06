@@ -41,18 +41,19 @@ class SearchAgent(BaseAgent):
             try:
                 response = await client.search(
                     query=query,
-                    search_depth=search_depth,
-                    max_results=2,
+                    search_depth="advanced", # Always use advanced for better quality
+                    max_results=8, # Fetch more results so we can filter for quality
                     include_raw_content=True,
                 )
                 
+                query_results = []
                 for result in response.get("results", []):
                     url = result.get("url", "")
                     if url in seen_urls:
                         continue
                     seen_urls.add(url)
                     
-                    all_results.append(WebSearchResult(
+                    query_results.append(WebSearchResult(
                         title=result.get("title", ""),
                         url=url,
                         snippet=result.get("content", "")[:300],
@@ -62,13 +63,17 @@ class SearchAgent(BaseAgent):
                         source_type=self._classify_source(url),
                         credibility_score=self._estimate_credibility(url),
                     ))
+                
+                # Sort by credibility first, then relevance, and keep the top 3 most trusted sources
+                query_results.sort(key=lambda x: (x.credibility_score, x.relevance_score), reverse=True)
+                all_results.extend(query_results[:3])
                     
             except Exception as e:
                 logger.error(f"Search failed for query '{query}': {e}")
                 continue
         
         context.search_results = all_results
-        logger.info(f"Search agent found {len(all_results)} unique results")
+        logger.info(f"Search agent found {len(all_results)} high-quality results")
         
         return AgentResult(success=True, data=all_results, tokens_used=0)
     
@@ -87,13 +92,13 @@ class SearchAgent(BaseAgent):
         """Estimate source credibility based on domain."""
         url_lower = url.lower()
         if any(d in url_lower for d in [".gov", ".edu", "who.int", "un.org"]):
-            return 0.9
-        if any(d in url_lower for d in ["arxiv.org", "nature.com", "science.org", "pubmed"]):
+            return 0.95
+        if any(d in url_lower for d in ["arxiv.org", "nature.com", "science.org", "pubmed", "mckinsey.com", "gartner.com", "hbr.org", "forrester.com"]):
+            return 0.90
+        if any(d in url_lower for d in ["reuters", "apnews", "bbc.com", "wsj.com", "bloomberg.com", "ft.com"]):
             return 0.85
-        if any(d in url_lower for d in ["reuters", "apnews", "bbc.com"]):
-            return 0.8
-        if any(d in url_lower for d in ["nytimes", "washingtonpost", "theguardian", "economist"]):
-            return 0.75
-        if any(d in url_lower for d in ["wikipedia.org"]):
+        if any(d in url_lower for d in ["nytimes", "washingtonpost", "theguardian", "economist", "forbes.com", "techcrunch.com", "wired.com", "cnbc.com"]):
+            return 0.80
+        if any(d in url_lower for d in ["wikipedia.org", "medium.com"]):
             return 0.65
         return 0.5

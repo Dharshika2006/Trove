@@ -9,10 +9,14 @@ export function formatDate(date: string | Date | undefined | null): string {
   if (!date) return "Unknown date";
   
   try {
-    // If it's a sqlite naive string like "2023-10-10 12:00:00", replace space with T and append Z
+    // If it's a sqlite naive string like "2023-10-10 12:00:00", replace space with T
     let parsedDate = date;
-    if (typeof date === "string" && !date.includes("T") && date.includes(" ")) {
-      parsedDate = date.replace(" ", "T") + "Z";
+    if (typeof date === "string") {
+      parsedDate = date.replace(" ", "T");
+      // If the string lacks timezone info (Z, +, or - at the end), append Z to force UTC parsing
+      if (!/(Z|[+-]\d{2}:?\d{2})$/.test(parsedDate)) {
+        parsedDate += "Z";
+      }
     }
     
     const d = new Date(parsedDate);

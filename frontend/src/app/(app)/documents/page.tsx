@@ -82,7 +82,8 @@ export default function DocumentLibrary() {
     }
   };
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string | undefined) => {
+    if (!type) return <File className="w-8 h-8 text-muted-foreground" />;
     if (type.includes('pdf')) return <FileText className="w-8 h-8 text-red-400" />;
     if (type.includes('word') || type.includes('docx')) return <File className="w-8 h-8 text-blue-400" />;
     if (type.includes('markdown') || type.includes('md')) return <FileCode className="w-8 h-8 text-yellow-400" />;
@@ -150,7 +151,7 @@ export default function DocumentLibrary() {
             <div key={doc.id} className="group bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 transition-all duration-200 hover:scale-[1.02] hover:border-primary/30 flex flex-col">
               <div className="flex items-start justify-between mb-4">
                 <div className="p-3 bg-background rounded-xl shadow-sm border border-border/50">
-                  {getFileIcon(doc.type)}
+                  {getFileIcon(doc.file_type)}
                 </div>
                 <div className="flex gap-2">
                   <button className="p-2 text-muted-foreground hover:text-primary transition-colors bg-background rounded-lg opacity-0 group-hover:opacity-100 shadow-sm border border-transparent group-hover:border-border">
@@ -162,11 +163,11 @@ export default function DocumentLibrary() {
                 </div>
               </div>
               
-              <h3 className="font-semibold text-lg truncate mb-1" title={doc.name}>{doc.name}</h3>
+              <h3 className="font-semibold text-lg truncate mb-1" title={doc.filename}>{doc.filename}</h3>
               
               <div className="mt-auto pt-4 flex items-center justify-between text-xs text-muted-foreground border-t border-border/50">
-                <span>{formatFileSize(doc.size)}</span>
-                <span>{formatDate(doc.createdAt)}</span>
+                <span>{formatFileSize(doc.file_size)}</span>
+                <span>{formatDate(doc.created_at)}</span>
               </div>
             </div>
           ))}

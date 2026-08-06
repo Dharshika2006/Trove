@@ -2,6 +2,7 @@ import logging
 from app.agents.base import BaseAgent
 from app.agents.models import AgentContext, AgentResult, FinalReport
 from app.core.llm import get_llm_client
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +40,8 @@ Report Structure (use strict markdown formatting, including `##` for all section
 ## 10. Confidence Assessment
 (Overall confidence in the findings)
 
-## 11. References
-(Numbered list of all sources)
-
 CRITICAL RULES:
 - Every claim MUST have an inline citation like [1], [2], etc.
-- Citations reference the numbered sources in the References section
 - Be balanced — present multiple perspectives
 - Distinguish facts from opinions
 - Acknowledge limitations and gaps
@@ -63,31 +60,55 @@ class ReportAgent(BaseAgent):
         # Build comprehensive input from all prior agents
         input_text = self._build_report_input(context)
         
-        response = await llm.complete(
+        from app.api.websocket import manager
+        
+        full_content = ""
+        async for chunk in llm.stream(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": input_text},
             ],
             temperature=0.3,
             max_tokens=8192,
-        )
+        ):
+            full_content += chunk
+            # Fire-and-forget broadcast to avoid blocking the stream
+            import asyncio
+            asyncio.create_task(
+                manager.broadcast(context.research_id, {
+                    "type": "agent_stream",
+                    "agent_name": self.name,
+                    "token": chunk
+                })
+            )
         
-        # Build references list
+        # Build references list and append to markdown
         references = []
+        references_md = "\n\n## References\n"
         if context.summary and context.summary.source_references:
             for i, ref in enumerate(context.summary.source_references, 1):
+                title = ref.get("title", "Unknown")
+                url = ref.get("url", "")
+                
                 references.append({
                     "index": i,
-                    "title": ref.get("title", "Unknown"),
-                    "url": ref.get("url", ""),
+                    "title": title,
+                    "url": url,
                     "type": ref.get("type", "web"),
                 })
+                
+                if url:
+                    references_md += f"{i}. [{title}]({url})\n"
+                else:
+                    references_md += f"{i}. {title}\n"
+        
+        full_content += references_md
         
         confidence = context.critique.confidence_score if context.critique else 0.5
         
         report = FinalReport(
             title=f"Research Report: {context.question}",
-            full_markdown=response.content,
+            full_markdown=full_content,
             confidence_score=confidence,
             references=references,
             research_question=context.question,
@@ -99,7 +120,7 @@ class ReportAgent(BaseAgent):
     
     def _build_report_input(self, context: AgentContext) -> str:
         """Compile all agent outputs into a comprehensive input for report generation."""
-        parts = [f"Research Question: {context.question}\n"]
+        parts = [f"Current Date: {datetime.now().strftime('%Y-%m-%d')}\nResearch Question: {context.question}\n"]
         
         # Research Plan
         if context.research_plan:

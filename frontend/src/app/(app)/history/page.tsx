@@ -135,7 +135,7 @@ export default function HistoryPage() {
                     {item.question}
                   </h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    <span>{formatDate(item.createdAt)}</span>
+                    <span>{formatDate(item.created_at)}</span>
                     <span>•</span>
                     <span className="capitalize">{item.depth} Depth</span>
                     {item.confidence && (

@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Home, Search, FileText, Clock, Settings, LogOut, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "New Research", href: "/research/new", icon: Search },
   { name: "Documents", href: "/documents", icon: FileText },
   { name: "History", href: "/history", icon: Clock },
@@ -23,7 +24,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "glass hidden md:flex flex-col h-screen sticky top-0 transition-all duration-300 z-40",
+        "bg-card border-r border-border hidden md:flex flex-col h-screen sticky top-0 transition-all duration-300 z-40",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -58,12 +59,12 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 isActive 
-                  ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.3)]" 
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  ? "bg-secondary text-foreground font-semibold" 
+                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
               )}
               title={collapsed ? item.name : undefined}
             >
-              <Icon size={20} className={cn("shrink-0", isActive ? "text-primary-foreground" : "group-hover:text-foreground")} />
+              <Icon size={20} className={cn("shrink-0", isActive ? "text-foreground" : "group-hover:text-foreground")} />
               {!collapsed && (
                 <span className="font-medium truncate animate-fade-in">{item.name}</span>
               )}
@@ -96,6 +97,7 @@ export function Sidebar() {
             </div>
           )
         )}
+        <ThemeToggle collapsed={collapsed} />
         <button
           onClick={logout}
           className={cn(

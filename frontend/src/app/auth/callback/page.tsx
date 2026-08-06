@@ -18,7 +18,7 @@ function AuthCallbackContent() {
     if (token) {
       setTokenAndLoad(token)
         .then(() => {
-          router.push("/");
+          router.push("/dashboard");
         })
         .catch(() => {
           setError("Failed to authenticate with token.");

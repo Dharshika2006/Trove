@@ -3,6 +3,7 @@ import logging
 from app.agents.base import BaseAgent
 from app.agents.models import AgentContext, AgentResult, Summary
 from app.core.llm import get_llm_client
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,8 @@ class SummarizerAgent(BaseAgent):
         # Build content block from retrieved results
         content_block = self._build_content_block(context)
         
-        user_message = f"""Research Question: {context.question}
+        user_message = f"""Current Date: {datetime.now().strftime('%Y-%m-%d')}
+Research Question: {context.question}
 
 Retrieved Content:
 {content_block}

@@ -171,4 +171,5 @@ export interface AgentProgress {
   elapsed_time: number | null;
   preview_data: Record<string, any> | null;
   error: string | null;
+  token?: string;
 }

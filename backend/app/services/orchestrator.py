@@ -34,6 +34,37 @@ class ResearchOrchestrator:
         self.critic = CriticAgent()
         self.report_gen = ReportAgent()
     
+    async def _run_agent(self, research_id: str, status_name: str, agent_name: str, agent: Any, context: AgentContext) -> bool:
+        logger.info(f"Research {research_id}: Starting step '{agent_name}' ({status_name})")
+        
+        # Don't overwrite higher-level parallel status if not necessary, but broadcast is fine
+        if status_name not in ("searching", "processing_documents"):
+            await self._update_status(research_id, status_name)
+            
+        await self._broadcast_progress(research_id, agent_name, "running")
+        
+        result = await agent.run(context)
+        
+        if result.success:
+            await self._broadcast_progress(
+                research_id, agent_name, "completed",
+                elapsed_time=result.execution_time,
+                preview_data=self._get_preview(agent_name, result.data),
+            )
+            return True
+        else:
+            logger.error(f"Agent '{agent_name}' failed for research {research_id}: {result.error}")
+            await self._broadcast_progress(
+                research_id, agent_name, "error",
+                error=result.error,
+            )
+            
+            if agent_name in ("search", "document", "critic"):
+                logger.warning(f"Non-critical agent '{agent_name}' failed, continuing pipeline...")
+                return True
+            else:
+                raise RuntimeError(f"Critical agent '{agent_name}' failed: {result.error}")
+
     async def run_research(
         self,
         research_id: str,
@@ -41,21 +72,11 @@ class ResearchOrchestrator:
         depth: str = "standard",
         document_ids: Optional[list[str]] = None,
     ) -> Optional[FinalReport]:
-        """Execute the full research pipeline sequentially.
-        
-        Args:
-            research_id: Unique identifier for the research session.
-            question: The main research question/topic.
-            depth: The depth of the research (e.g., 'standard', 'deep').
-            document_ids: Optional list of document IDs to include in context.
-            
-        Returns:
-            The generated FinalReport if successful, None otherwise.
-        """
+        """Execute the multi-agent research pipeline."""
         start_time = time.time()
         document_ids = document_ids or []
+        import asyncio
         
-        # Initialize shared context for the pipeline
         context = AgentContext(
             question=question,
             depth=depth,
@@ -63,53 +84,22 @@ class ResearchOrchestrator:
             document_ids=document_ids,
         )
         
-        # Define the sequential pipeline of agents
-        agents_pipeline = [
-            ("planning", "planner", self.planner),
-            ("searching", "search", self.search),
-            ("processing_documents", "document", self.document),
-            ("retrieving", "retriever", self.retriever),
-            ("summarizing", "summarizer", self.summarizer),
-            ("critiquing", "critic", self.critic),
-            ("reporting", "report", self.report_gen),
-        ]
-        
         try:
-            for status_name, agent_name, agent in agents_pipeline:
-                logger.info(f"Research {research_id}: Starting step '{agent_name}' ({status_name})")
-                
-                # Update state in database
-                await self._update_status(research_id, status_name)
-                
-                # Broadcast start of agent execution
-                await self._broadcast_progress(research_id, agent_name, "running")
-                
-                # Execute agent
-                result = await agent.run(context)
-                
-                if result.success:
-                    await self._broadcast_progress(
-                        research_id, agent_name, "completed",
-                        elapsed_time=result.execution_time,
-                        preview_data=self._get_preview(agent_name, result.data),
-                    )
-                else:
-                    logger.error(f"Agent '{agent_name}' failed for research {research_id}: {result.error}")
-                    await self._broadcast_progress(
-                        research_id, agent_name, "error",
-                        error=result.error,
-                    )
-                    
-                    # Handle graceful degradation based on agent criticality
-                    if agent_name in ("search", "document"):
-                        logger.warning(f"Non-critical agent '{agent_name}' failed, continuing pipeline...")
-                        continue
-                    elif agent_name == "critic":
-                        # Critic failure shouldn't completely halt report generation
-                        logger.warning("Critic agent failed, proceeding to report generation without critique")
-                        continue
-                    else:
-                        raise RuntimeError(f"Critical agent '{agent_name}' failed: {result.error}")
+            # 1. Planning
+            await self._run_agent(research_id, "planning", "planner", self.planner, context)
+            
+            # 2. Parallel Search and Document Processing
+            await self._update_status(research_id, "gathering_context")
+            await asyncio.gather(
+                self._run_agent(research_id, "searching", "search", self.search, context),
+                self._run_agent(research_id, "processing_documents", "document", self.document, context)
+            )
+            
+            # 3. Sequential processing
+            await self._run_agent(research_id, "retrieving", "retriever", self.retriever, context)
+            await self._run_agent(research_id, "summarizing", "summarizer", self.summarizer, context)
+            await self._run_agent(research_id, "critiquing", "critic", self.critic, context)
+            await self._run_agent(research_id, "reporting", "report", self.report_gen, context)
             
             # Finalize pipeline execution
             if context.final_report:

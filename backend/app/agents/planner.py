@@ -3,6 +3,7 @@ import logging
 from app.agents.base import BaseAgent
 from app.agents.models import AgentContext, AgentResult, ResearchPlan
 from app.core.llm import get_llm_client
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,8 @@ class PlannerAgent(BaseAgent):
     async def execute(self, context: AgentContext) -> AgentResult:
         llm = get_llm_client()
         
-        user_message = f"""Research Question: {context.question}
+        user_message = f"""Current Date: {datetime.now().strftime('%Y-%m-%d')}
+Research Question: {context.question}
 Research Depth: {context.depth}
 
 Create a research plan for this question at the specified depth level."""

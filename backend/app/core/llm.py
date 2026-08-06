@@ -83,7 +83,7 @@ class LLMClient:
                 )
                 return result
                 
-            except litellm.RateLimitError as e:
+            except (litellm.RateLimitError, litellm.ServiceUnavailableError, litellm.APIError) as e:
                 if attempt < max_retries:
                     wait_time = 25 * (attempt + 1)
                     logger.warning(f"Rate limit hit. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
@@ -101,13 +101,14 @@ class LLMClient:
         messages: list[dict],
         model: Optional[str] = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = 8192,
     ) -> dict:
         """Get structured JSON response from LLM.
         
         Appends instruction to return valid JSON and parses the response.
         """
         import json
+        import json_repair
         
         # Add JSON instruction to the last message or system message
         json_messages = messages.copy()
@@ -128,12 +129,12 @@ class LLMClient:
             # Try parsing directly
             return json.loads(response.content)
         except json.JSONDecodeError:
-            # Try extracting JSON from markdown code blocks
+            # Fallback to json-repair for truncated or malformed JSON
             content = response.content.strip()
             if content.startswith("```"):
                 lines = content.split("\n")
                 content = "\n".join(lines[1:-1]) if len(lines) > 2 else content
-            return json.loads(content)
+            return json_repair.loads(content)
     
     async def stream(
         self,

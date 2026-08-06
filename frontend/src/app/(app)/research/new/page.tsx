@@ -21,27 +21,18 @@ const DEPTH_OPTIONS = [
     title: "Quick",
     desc: "2-3 sources, ~30 seconds",
     icon: Zap,
-    color: "text-yellow-500",
-    bg: "bg-yellow-500/10",
-    border: "border-yellow-500/30"
   },
   {
     id: "standard",
     title: "Standard",
     desc: "5-10 sources, ~2 minutes",
     icon: Search,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/30"
   },
   {
     id: "deep",
     title: "Deep",
     desc: "15+ sources, ~5 minutes",
     icon: Brain,
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/30"
   }
 ];
 
@@ -137,7 +128,7 @@ function NewResearchContent() {
         </div>
       )}
 
-      <div className="space-y-8 bg-card/50 backdrop-blur-sm border border-border p-6 md:p-8 rounded-3xl shadow-xl">
+      <div className="space-y-8 bg-card border border-border p-6 md:p-8 rounded-2xl shadow-sm">
         {/* Question Input */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground ml-1">Research Question</label>
@@ -145,7 +136,7 @@ function NewResearchContent() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="What would you like to research?"
-            className="w-full h-32 bg-background/50 border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/50 rounded-2xl p-4 text-lg resize-none outline-none transition-all placeholder:text-muted-foreground/50"
+            className="w-full h-32 bg-background border border-border focus:border-foreground focus:ring-1 focus:ring-foreground rounded-xl p-4 text-lg resize-none outline-none transition-all placeholder:text-muted-foreground/50"
           />
         </div>
 
@@ -160,12 +151,12 @@ function NewResearchContent() {
                 className={cn(
                   "flex flex-col items-start p-4 rounded-2xl border text-left transition-all duration-200",
                   depth === opt.id 
-                    ? `border-primary bg-primary/5 ring-1 ring-primary/20 scale-[1.02]` 
-                    : "border-border bg-background/50 hover:border-muted-foreground/30 hover:bg-card"
+                    ? `border-foreground bg-secondary/50 scale-[1.02]` 
+                    : "border-border bg-background hover:border-muted-foreground/50"
                 )}
               >
-                <div className={cn("p-2 rounded-xl mb-3", opt.bg)}>
-                  <opt.icon className={cn("w-5 h-5", opt.color)} />
+                <div className="p-2 rounded-xl mb-3 bg-secondary">
+                  <opt.icon className="w-5 h-5 text-foreground" />
                 </div>
                 <div className="font-semibold">{opt.title}</div>
                 <div className="text-xs text-muted-foreground mt-1">{opt.desc}</div>
@@ -185,7 +176,7 @@ function NewResearchContent() {
             onDrop={handleDrop}
             className={cn(
               "border-2 border-dashed rounded-2xl p-8 text-center transition-all flex flex-col items-center justify-center gap-4",
-              isDragging ? "border-primary bg-primary/5" : "border-border bg-background/30 hover:bg-background/50"
+              isDragging ? "border-foreground bg-secondary/50" : "border-border bg-background hover:bg-secondary/30"
             )}
           >
             <div className="p-4 bg-card rounded-full shadow-sm">
@@ -231,7 +222,7 @@ function NewResearchContent() {
           <button
             onClick={handleSubmit}
             disabled={!question.trim() || isSubmitting}
-            className="w-full md:w-auto bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-primary/25"
+            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 shadow-sm"
           >
             {isSubmitting ? (
               <>
