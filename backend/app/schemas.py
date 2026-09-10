@@ -13,7 +13,8 @@ class UserResponse(BaseModel):
     email: str
     name: str
     avatar_url: Optional[str] = None
-    oauth_provider: str
+    google_id: Optional[str] = None
+    github_id: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -36,6 +37,7 @@ class ResearchResponse(BaseModel):
     completed_at: Optional[datetime] = None
     has_report: bool = False
     confidence_score: Optional[float] = None
+    coverage_score: Optional[float] = None
     
     class Config:
         from_attributes = True
@@ -68,6 +70,7 @@ class ReportResponse(BaseModel):
     research_id: str
     content: str
     confidence_score: float
+    coverage_score: float
     metadata_json: Optional[dict] = None
     created_at: datetime
     

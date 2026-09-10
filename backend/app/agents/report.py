@@ -104,12 +104,14 @@ class ReportAgent(BaseAgent):
         
         full_content += references_md
         
-        confidence = context.critique.confidence_score if context.critique else 0.5
+        confidence = context.critique.evidence_confidence if context.critique else 0.5
+        coverage = context.critique.research_coverage if context.critique else 0.5
         
         report = FinalReport(
             title=f"Research Report: {context.question}",
             full_markdown=full_content,
             confidence_score=confidence,
+            coverage_score=coverage,
             references=references,
             research_question=context.question,
             methodology=f"Multi-agent research system using {len(context.search_results)} web sources and {len(context.document_chunks)} document chunks",
@@ -151,7 +153,8 @@ class ReportAgent(BaseAgent):
         if context.critique:
             c = context.critique
             parts.append("\n=== CRITIQUE & LIMITATIONS ===")
-            parts.append(f"Confidence Score: {c.confidence_score}")
+            parts.append(f"Confidence Score: {c.evidence_confidence}")
+            parts.append(f"Coverage Score: {c.research_coverage}")
             parts.append("Strengths:")
             for s in c.strengths:
                 parts.append(f"- {s}")

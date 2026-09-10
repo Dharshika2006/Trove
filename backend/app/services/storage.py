@@ -73,9 +73,18 @@ class LocalStorage(StorageBackend):
             file_path = os.path.join(user_dir, unique_name)
             
             with open(file_path, "wb") as f:
-                f.write(content)
+                if isinstance(content, bytes):
+                    f.write(content)
+                else:
+                    # Treat as file-like object and stream
+                    content.seek(0)
+                    while True:
+                        chunk = content.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        f.write(chunk)
             
-            logger.info(f"Saved file: {file_path} ({len(content)} bytes)")
+            logger.info(f"Saved file: {file_path}")
             return file_path
         except IOError as e:
             logger.error(f"IOError saving file {filename} for user {user_id}: {e}")

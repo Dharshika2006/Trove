@@ -120,7 +120,18 @@ class Critique:
     weaknesses: list[str] = field(default_factory=list)
     contradictions: list[dict] = field(default_factory=list)  # {"claim1": str, "claim2": str, "sources": list}
     unsupported_claims: list[str] = field(default_factory=list)
-    confidence_score: float = 0.5  # 0.0 to 1.0
+    
+    # Raw LLM evaluation fields
+    source_evaluations: list[dict] = field(default_factory=list)
+    contradiction_severity: float = 0.0
+    core_claims_supported_ratio: float = 1.0
+    perspectives_covered: int = 1
+    total_perspectives_needed: int = 3
+    
+    # Deterministic scores
+    evidence_confidence: float = 0.5  # 0.0 to 1.0
+    research_coverage: float = 0.5    # 0.0 to 1.0
+    
     recommendations: list[str] = field(default_factory=list)
     source_quality_assessment: str = ""
 
@@ -141,5 +152,6 @@ class FinalReport:
     source_comparison: str = ""
     limitations: str = ""
     confidence_score: float = 0.5
+    coverage_score: float = 0.5
     references: list[dict] = field(default_factory=list)  # {"index": int, "title": str, "url": str, "type": str}
     full_markdown: str = ""  # Complete formatted report

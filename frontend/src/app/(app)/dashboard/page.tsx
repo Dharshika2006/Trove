@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { api, type Research } from "@/lib/api";
 import {
   Search,
   FileText,
@@ -28,7 +28,7 @@ export default function Dashboard() {
     completed: 0,
     documents: 0,
   });
-  const [recentResearch, setRecentResearch] = useState<any[]>([]);
+  const [recentResearch, setRecentResearch] = useState<Research[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
@@ -42,8 +42,8 @@ export default function Dashboard() {
         
         setRecentResearch(history.items.slice(0, 5));
         
-        const active = history.items.filter((r: any) => ["pending", "running"].includes(r.status)).length;
-        const completed = history.items.filter((r: any) => r.status === "completed").length;
+        const active = history.items.filter((r: Research) => ["pending", "running"].includes(r.status)).length;
+        const completed = history.items.filter((r: Research) => r.status === "completed").length;
         
         setStats({
           total: history.items.length,
@@ -52,7 +52,9 @@ export default function Dashboard() {
           documents: docs.items.length,
         });
       } catch (error) {
-        console.error("Failed to load dashboard data", error);
+        // Safe fallback on error, though UI shows empty state
+        setRecentResearch([]);
+        setStats({ total: 0, active: 0, completed: 0, documents: 0 });
       } finally {
         setLoading(false);
       }

@@ -30,12 +30,12 @@ export function Sidebar() {
     >
       <div className="flex items-center justify-between p-4 border-b border-border h-16">
         {!collapsed && (
-          <div className="flex items-center gap-2 overflow-hidden animate-fade-in">
+          <Link href="/" className="flex items-center gap-2 overflow-hidden animate-fade-in hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
               T
             </div>
             <span className="font-semibold text-lg tracking-tight truncate">Trove</span>
-          </div>
+          </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

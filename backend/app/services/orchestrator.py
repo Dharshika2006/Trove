@@ -1,5 +1,6 @@
 import logging
 import time
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional, Any, Dict
 from sqlalchemy import select
@@ -43,8 +44,13 @@ class ResearchOrchestrator:
             
         await self._broadcast_progress(research_id, agent_name, "running")
         
-        result = await agent.run(context)
-        
+        try:
+            result = await agent.run(context)
+        except BaseException as e:
+            logger.error(f"Agent '{agent_name}' raised exception for research {research_id}: {e}")
+            await self._broadcast_progress(research_id, agent_name, "failed", error=f"{type(e).__name__}: {str(e)}")
+            raise RuntimeError(f"Agent '{agent_name}' crashed: {e}") from e
+
         if result.success:
             await self._broadcast_progress(
                 research_id, agent_name, "completed",
@@ -55,7 +61,7 @@ class ResearchOrchestrator:
         else:
             logger.error(f"Agent '{agent_name}' failed for research {research_id}: {result.error}")
             await self._broadcast_progress(
-                research_id, agent_name, "error",
+                research_id, agent_name, "failed",
                 error=result.error,
             )
             
@@ -75,7 +81,6 @@ class ResearchOrchestrator:
         """Execute the multi-agent research pipeline."""
         start_time = time.time()
         document_ids = document_ids or []
-        import asyncio
         
         context = AgentContext(
             question=question,
@@ -113,10 +118,11 @@ class ResearchOrchestrator:
             else:
                 raise ValueError("Pipeline completed but no final report was generated in context")
                 
-        except Exception as e:
+        except BaseException as e:
             logger.exception(f"Research {research_id} failed catastrophically: {e}")
-            await self._update_status(research_id, "failed", error=str(e))
-            await self._broadcast_progress(research_id, "system", "error", error=str(e))
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            await self._update_status(research_id, "failed", error=error_msg)
+            await self._broadcast_progress(research_id, "system", "failed", error=error_msg)
             return None
     
     async def _update_status(self, research_id: str, status: str, error: Optional[str] = None) -> None:
@@ -135,7 +141,7 @@ class ResearchOrchestrator:
                     research.status = status
                     if error:
                         research.error_message = error
-                    if status == "completed":
+                    if status in ("completed", "failed"):
                         research.completed_at = datetime.now(timezone.utc)
                     await db.commit()
                 else:
@@ -159,6 +165,7 @@ class ResearchOrchestrator:
                     research_id=research_id,
                     content=context.final_report.full_markdown,
                     confidence_score=context.final_report.confidence_score,
+                    coverage_score=context.final_report.coverage_score,
                     metadata_json={
                         "title": context.final_report.title,
                         "references": context.final_report.references,
@@ -226,10 +233,10 @@ class ResearchOrchestrator:
                 return {"merged_count": len(data)}
             elif agent_name == "summarizer" and hasattr(data, "key_findings"):
                 return {"finding_count": len(data.key_findings), "fact_count": len(data.facts) if hasattr(data, 'facts') else 0}
-            elif agent_name == "critic" and hasattr(data, "confidence_score"):
-                return {"confidence": data.confidence_score, "contradiction_count": len(data.contradictions) if hasattr(data, 'contradictions') else 0}
+            elif agent_name == "critic" and hasattr(data, "evidence_confidence"):
+                return {"confidence": data.evidence_confidence, "coverage": data.research_coverage, "contradiction_count": len(data.contradictions) if hasattr(data, 'contradictions') else 0}
             elif agent_name == "report" and hasattr(data, "full_markdown"):
-                return {"report_length": len(data.full_markdown), "confidence": getattr(data, 'confidence_score', None)}
+                return {"report_length": len(data.full_markdown), "confidence": getattr(data, 'confidence_score', None), "coverage": getattr(data, 'coverage_score', None)}
         except Exception as e:
             logger.debug(f"Failed to generate preview for {agent_name}: {e}")
             

@@ -24,15 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
-      const token = api.getToken();
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
       const userData = await api.getMe();
       setUser(userData);
     } catch {
-      api.clearToken();
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -43,16 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  const logout = useCallback(() => {
-    api.clearToken();
+  const logout = useCallback(async () => {
     setUser(null);
+    await api.logout();
     if (typeof window !== "undefined") {
       window.location.href = "/";
     }
   }, []);
 
   const setTokenAndLoad = useCallback(async (token: string) => {
-    api.setToken(token);
+    // Legacy support for callback if needed, but primarily relying on cookie
     await loadUser();
   }, []);
 

@@ -104,9 +104,9 @@ function NewResearchContent() {
       });
       
       router.push(`/research/${research.id}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to start research");
+      setError(err instanceof Error ? err.message : "Failed to start research");
       setIsSubmitting(false);
     }
   };

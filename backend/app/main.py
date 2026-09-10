@@ -57,6 +57,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Rate Limiter setup
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
+from app.core.limiter import limiter
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # Include routers
 app.include_router(router, prefix="")
 app.include_router(websocket_router, prefix="")

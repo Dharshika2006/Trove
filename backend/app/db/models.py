@@ -18,8 +18,12 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    oauth_provider: Mapped[str] = mapped_column(String(20), nullable=False)  # "google" or "github"
-    oauth_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    google_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    github_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    
+    # Legacy columns (kept to satisfy SQLite NOT NULL constraints until Alembic migration)
+    oauth_provider: Mapped[str] = mapped_column(String(20), default="legacy")
+    oauth_id: Mapped[str] = mapped_column(String(255), default="legacy")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     
     researches: Mapped[list["Research"]] = relationship(back_populates="user", cascade="all, delete-orphan")
@@ -67,6 +71,7 @@ class Report(Base):
     research_id: Mapped[str] = mapped_column(String(36), ForeignKey("researches.id"), unique=True, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)  # Markdown report
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    coverage_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Agent execution metadata
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     

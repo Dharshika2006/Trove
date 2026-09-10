@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:3000"
     
+    # Environment
+    env: str = "development"
+    
     # Storage
     upload_dir: str = "./uploads"
     sqlite_db_path: str = "./data/trove.db"
@@ -43,3 +46,6 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
 
 settings = Settings()
+
+if settings.env == "production" and settings.jwt_secret_key == "change-this-to-a-random-secret-in-production":
+    raise ValueError("FATAL: JWT_SECRET_KEY must be set in production to a secure random string.")

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface ConfidenceGaugeProps {
+interface ScoreGaugeProps {
   score: number;
+  label?: string;
   size?: number;
   className?: string;
 }
 
-export function ConfidenceGauge({ score, size = 120, className }: ConfidenceGaugeProps) {
+export function ScoreGauge({ score, label = "Confidence", size = 120, className }: ScoreGaugeProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
   
   useEffect(() => {
@@ -91,7 +92,7 @@ export function ConfidenceGauge({ score, size = 120, className }: ConfidenceGaug
           {Math.round(animatedScore)}%
         </span>
         <span className="text-muted-foreground uppercase tracking-wider font-semibold" style={{ fontSize: size * 0.08 }}>
-          Confidence
+          {label}
         </span>
       </div>
     </div>

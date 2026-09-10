@@ -1,38 +1,10 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 class ApiClient {
-  private token: string | null = null;
-
-  setToken(token: string) {
-    this.token = token;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("trove_token", token);
-    }
-  }
-
-  getToken(): string | null {
-    if (this.token) return this.token;
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("trove_token");
-    }
-    return this.token;
-  }
-
-  clearToken() {
-    this.token = null;
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("trove_token");
-    }
-  }
-
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const token = this.getToken();
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string> || {}),
     };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
     if (!(options.body instanceof FormData)) {
       headers["Content-Type"] = "application/json";
     }
@@ -40,11 +12,11 @@ class ApiClient {
     const response = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers,
+      credentials: "include", // Send cookies with every request
     });
 
     if (response.status === 401) {
-      this.clearToken();
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && window.location.pathname !== "/" && !window.location.pathname.startsWith("/auth")) {
         window.location.href = "/auth";
       }
       throw new Error("Unauthorized");
@@ -56,6 +28,14 @@ class ApiClient {
     }
 
     return response.json();
+  }
+  
+  async logout() {
+    try {
+      await this.request("/auth/logout", { method: "POST" });
+    } catch (e) {
+      // ignore
+    }
   }
 
   // Auth
@@ -130,7 +110,8 @@ export interface User {
   email: string;
   name: string;
   avatar_url: string | null;
-  oauth_provider: string;
+  google_id: string | null;
+  github_id: string | null;
   created_at: string;
 }
 
@@ -144,6 +125,7 @@ export interface Research {
   completed_at: string | null;
   has_report: boolean;
   confidence_score: number | null;
+  coverage_score: number | null;
 }
 
 export interface Document {
@@ -152,6 +134,16 @@ export interface Document {
   file_type: string;
   file_size: number;
   chunk_count: number;
+  created_at: string;
+}
+
+export interface ReportResponse {
+  id: string;
+  research_id: string;
+  content: string;
+  confidence_score: number;
+  coverage_score: number;
+  metadata_json?: any;
   created_at: string;
 }
 

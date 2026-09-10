@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, type Research, type Report } from "@/lib/api";
 import { useResearchProgress } from "@/lib/websocket";
 import { PageLoader, CardSkeleton } from "@/components/loading-states";
-import { ConfidenceGauge } from "@/components/confidence-gauge";
+import { ScoreGauge } from "@/components/score-gauge";
 import { SourceCard } from "@/components/source-card";
 import { 
   Check, 
@@ -24,6 +24,20 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+interface Section {
+  id: string;
+  title: string;
+  content: string;
+}
+
+interface Source {
+  title: string;
+  url: string;
+  snippet: string;
+  type: string;
+  credibility: string;
+}
+
 const PIPELINE_AGENTS = [
   { id: "planner", name: "Planner Agent", icon: Brain },
   { id: "search", name: "Search Agent", icon: Search },
@@ -39,8 +53,8 @@ export default function ResearchView() {
   const id = params?.id as string;
   const router = useRouter();
 
-  const [research, setResearch] = useState<any>(null);
-  const [reportData, setReportData] = useState<any>(null);
+  const [research, setResearch] = useState<Research | null>(null);
+  const [reportData, setReportData] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("section-0");
@@ -83,8 +97,8 @@ export default function ResearchView() {
           // Report may not be ready yet
         }
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load research");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load research");
     } finally {
       setLoading(false);
     }
@@ -117,12 +131,12 @@ export default function ResearchView() {
         title,
         content: section
       };
-    }).filter((s: any) => s.content.trim().length > 0);
+    }).filter((s: Section) => s.content.trim().length > 0);
   }, [reportData?.content]);
 
   // Ensure active tab resets if it somehow gets out of bounds
   useEffect(() => {
-    if (sections.length > 0 && !sections.find((s: any) => s.id === activeTab)) {
+    if (sections.length > 0 && !sections.find((s: Section) => s.id === activeTab)) {
       setActiveTab(sections[0].id);
     }
   }, [sections, activeTab]);
@@ -135,7 +149,7 @@ export default function ResearchView() {
         <div className="bg-destructive/10 border border-destructive/20 p-8 rounded-3xl flex flex-col items-center text-center max-w-lg">
           <AlertCircle className="w-16 h-16 text-destructive mb-4" />
           <h2 className="text-2xl font-bold text-destructive mb-2">Research Failed</h2>
-          <p className="text-destructive/80 mb-6">{error || research?.error || "An unexpected error occurred during the research process."}</p>
+          <p className="text-destructive/80 mb-6">{error || research?.error_message || "An unexpected error occurred during the research process."}</p>
           <button 
             onClick={() => router.push('/research/new')}
             className="bg-destructive text-destructive-foreground px-6 py-2 rounded-xl font-medium hover:bg-destructive/90 transition-colors"
@@ -212,9 +226,9 @@ export default function ResearchView() {
       const opt = {
         margin:       15,
         filename:     safeFilename,
-        image:        { type: 'jpeg', quality: 0.98 },
+        image:        { type: 'jpeg' as const, quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
         pagebreak:    { mode: ['css', 'legacy'] }
       };
 
@@ -293,9 +307,15 @@ export default function ResearchView() {
       ) : (
         /* Completed View */
         <div className="space-y-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            {reportData?.confidence_score != null && <ConfidenceGauge score={reportData.confidence_score * 100} />}
-            
+          <div className="flex flex-col md:flex-row justify-between items-start">
+            <div className="hidden lg:flex gap-4">
+              {reportData?.confidence_score != null && (
+                <ScoreGauge score={reportData.confidence_score * 100} label="Confidence" size={100} />
+              )}
+              {reportData?.coverage_score != null && (
+                <ScoreGauge score={reportData.coverage_score * 100} label="Coverage" size={100} />
+              )}
+            </div>  
             <div className="flex gap-3">
               <button onClick={handleCopy} className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl hover:bg-secondary/80 transition-colors">
                 <Copy className="w-4 h-4" /> Copy
@@ -329,7 +349,7 @@ export default function ResearchView() {
           {sections.length > 0 ? (
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap gap-2 border-b border-border/50 pb-4">
-                {sections.map((section: any) => (
+                {sections.map((section: Section) => (
                   <button
                     key={section.id}
                     onClick={() => setActiveTab(section.id)}
@@ -345,14 +365,14 @@ export default function ResearchView() {
                 ))}
               </div>
               
-              <article className="prose prose-invert prose-lg md:prose-xl max-w-none bg-card border border-border p-6 md:p-12 rounded-3xl shadow-lg prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-li:my-1 prose-strong:text-foreground prose-h1:mt-8 prose-h2:mt-0 prose-h2:mb-6 prose-h2:border-b prose-h2:border-border/50 prose-h2:pb-4 prose-h3:mt-8 prose-h3:text-foreground/90">
+              <article className="prose dark:prose-invert prose-lg md:prose-xl max-w-none bg-card border border-border p-6 md:p-12 rounded-3xl shadow-lg prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-p:text-foreground/90 prose-p:leading-relaxed prose-li:text-foreground/90 prose-li:my-1 prose-strong:text-foreground prose-h1:mt-8 prose-h2:mt-0 prose-h2:mb-6 prose-h2:border-b prose-h2:border-border/50 prose-h2:pb-4 prose-h3:mt-8 prose-h3:text-foreground/90">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {sections.find((s: any) => s.id === activeTab)?.content || ""}
+                  {sections.find((s: Section) => s.id === activeTab)?.content || ""}
                 </ReactMarkdown>
               </article>
             </div>
           ) : (
-            <article className="prose prose-invert prose-lg md:prose-xl max-w-none bg-card border border-border p-6 md:p-12 rounded-3xl shadow-lg">
+            <article className="prose dark:prose-invert prose-lg md:prose-xl max-w-none bg-card border border-border p-6 md:p-12 rounded-3xl shadow-lg">
               <CardSkeleton />
             </article>
           )}
@@ -361,8 +381,8 @@ export default function ResearchView() {
             <div className="space-y-4 pt-8">
               <h3 className="text-2xl font-bold border-b border-border pb-2">Sources Referenced</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reportData.metadata_json.references.map((source: any, i: number) => (
-                  <SourceCard key={i} title={source.title || "Source"} url={source.url || "#"} snippet={source.snippet || ""} type={source.type || "Web"} credibility={source.credibility || "medium"} />
+                {reportData.metadata_json?.references.map((source: Source, i: number) => (
+                  <SourceCard key={i} title={source.title || "Source"} url={source.url || "#"} snippet={source.snippet || ""} type={(source.type || "Web") as any} credibility={(source.credibility || "medium") as any} />
                 ))}
               </div>
             </div>

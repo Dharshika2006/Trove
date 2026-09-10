@@ -138,11 +138,19 @@ export default function HistoryPage() {
                     <span>{formatDate(item.created_at)}</span>
                     <span>•</span>
                     <span className="capitalize">{item.depth} Depth</span>
-                    {item.confidence && (
+                    {item.confidence_score != null && (
                       <>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          Score: <span className={item.confidence > 80 ? "text-success" : item.confidence > 50 ? "text-warning" : "text-destructive"}>{item.confidence}%</span>
+                          Conf: <span className={item.confidence_score > 0.8 ? "text-success" : item.confidence_score > 0.5 ? "text-warning" : "text-destructive"}>{Math.round(item.confidence_score * 100)}%</span>
+                        </span>
+                      </>
+                    )}
+                    {item.coverage_score != null && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          Cov: <span className="text-primary">{Math.round(item.coverage_score * 100)}%</span>
                         </span>
                       </>
                     )}
