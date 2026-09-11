@@ -82,8 +82,12 @@ class DocumentAgent(BaseAgent):
         """Extract text from PDF using PyMuPDF."""
         import fitz  # PyMuPDF
         text_parts = []
+        MAX_PAGES = 50 # Prevent Out of Memory on free tiers
         with fitz.open(file_path) as pdf:
             for page_num, page in enumerate(pdf):
+                if page_num >= MAX_PAGES:
+                    text_parts.append(f"\n[Note: Document truncated at {MAX_PAGES} pages to prevent memory overload]")
+                    break
                 page_text = page.get_text()
                 if page_text.strip():
                     text_parts.append(f"[Page {page_num + 1}]\n{page_text}")
