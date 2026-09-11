@@ -152,6 +152,7 @@ export interface Report {
   research_id: string;
   content: string;
   confidence_score: number;
+  coverage_score: number;
   metadata_json: Record<string, any> | null;
   created_at: string;
 }

@@ -18,6 +18,7 @@ const navItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -76,8 +77,13 @@ export function Sidebar() {
       <div className="p-3 border-t border-border">
         {user ? (
           <div className="flex items-center gap-3 px-2 py-2 mb-2 rounded-lg bg-secondary/50">
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-full shrink-0" />
+            {user.avatar_url && !imgError ? (
+              <img 
+                src={user.avatar_url} 
+                alt={user.name} 
+                className="w-8 h-8 rounded-full shrink-0" 
+                onError={() => setImgError(true)}
+              />
             ) : (
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
                 <User size={16} className="text-accent" />
