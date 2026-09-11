@@ -15,3 +15,5 @@ python-docx>=1.1.0
 python-multipart>=0.0.9
 markdown>=3.6
 itsdangerous>=2.1.2
+slowapi>=0.1.9
+python-magic>=0.4.27
