@@ -86,8 +86,8 @@ async def google_callback(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
-            samesite="lax",
+            secure=settings.env == "production",
+            samesite="none" if settings.env == "production" else "lax",
             max_age=settings.access_token_expire_minutes * 60
         )
         return response
@@ -181,8 +181,8 @@ async def github_callback(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
-            samesite="lax",
+            secure=settings.env == "production",
+            samesite="none" if settings.env == "production" else "lax",
             max_age=settings.access_token_expire_minutes * 60
         )
         return response
@@ -200,7 +200,11 @@ async def logout():
     """Clear HttpOnly access token cookie."""
     from fastapi.responses import JSONResponse
     response = JSONResponse(content={"detail": "Logged out"})
-    response.delete_cookie("access_token")
+    response.delete_cookie(
+        "access_token",
+        secure=settings.env == "production",
+        samesite="none" if settings.env == "production" else "lax"
+    )
     return response
 
 # ==================== RESEARCH ====================
