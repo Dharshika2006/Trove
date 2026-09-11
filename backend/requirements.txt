@@ -17,3 +17,4 @@ markdown>=3.6
 itsdangerous>=2.1.2
 slowapi>=0.1.9
 python-magic>=0.4.27
+json-repair>=0.30.0
