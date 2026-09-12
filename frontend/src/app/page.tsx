@@ -50,6 +50,11 @@ export default function LandingPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
+  // Wake up Render free tier backend instantly on page load
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://trove-c5ts.onrender.com'}/health`).catch(() => {});
+  }, []);
+
   // useEffect(() => {
   //   if (!isLoading && isAuthenticated) {
   //     router.push("/dashboard");
