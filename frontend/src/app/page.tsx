@@ -153,7 +153,7 @@ export default function LandingPage() {
           className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8 py-10 border-t border-b border-border/50 mb-24"
         >
           <div className="flex flex-col items-center">
-            <span className="text-4xl font-bold text-foreground mb-2">4</span>
+            <span className="text-4xl font-bold text-foreground mb-2">7</span>
             <span className="text-muted-foreground text-sm">agents per run</span>
           </div>
           <div className="flex flex-col items-center md:border-l md:border-r border-border/50">
