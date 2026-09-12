@@ -78,7 +78,8 @@ async def google_callback(
             if not user.google_id:
                 user.google_id = str(user_info["sub"])
             db.add(user)
-            await db.flush()
+            
+        await db.flush()
         
         access_token = create_access_token({"sub": user.id})
         response = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
