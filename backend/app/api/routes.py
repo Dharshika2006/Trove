@@ -83,12 +83,13 @@ async def google_callback(
         
         access_token = create_access_token({"sub": user.id})
         response = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        is_cross_origin = "https://" in settings.frontend_url
         response.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=settings.env == "production",
-            samesite="none" if settings.env == "production" else "lax",
+            secure=is_cross_origin or settings.env == "production",
+            samesite="none" if (is_cross_origin or settings.env == "production") else "lax",
             max_age=settings.access_token_expire_minutes * 60
         )
         return response
@@ -178,12 +179,13 @@ async def github_callback(
         
         access_token = create_access_token({"sub": user.id})
         response = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        is_cross_origin = "https://" in settings.frontend_url
         response.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=settings.env == "production",
-            samesite="none" if settings.env == "production" else "lax",
+            secure=is_cross_origin or settings.env == "production",
+            samesite="none" if (is_cross_origin or settings.env == "production") else "lax",
             max_age=settings.access_token_expire_minutes * 60
         )
         return response
@@ -201,10 +203,11 @@ async def logout():
     """Clear HttpOnly access token cookie."""
     from fastapi.responses import JSONResponse
     response = JSONResponse(content={"detail": "Logged out"})
+    is_cross_origin = "https://" in settings.frontend_url
     response.delete_cookie(
         "access_token",
-        secure=settings.env == "production",
-        samesite="none" if settings.env == "production" else "lax"
+        secure=is_cross_origin or settings.env == "production",
+        samesite="none" if (is_cross_origin or settings.env == "production") else "lax"
     )
     return response
 
