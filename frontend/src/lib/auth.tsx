@@ -39,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+    }
     await api.logout();
     if (typeof window !== "undefined") {
       window.location.href = "/";
@@ -46,7 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setTokenAndLoad = useCallback(async (token: string) => {
-    // Legacy support for callback if needed, but primarily relying on cookie
+    if (typeof window !== "undefined") {
+      localStorage.setItem("access_token", token);
+    }
     await loadUser();
   }, []);
 

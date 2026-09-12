@@ -5,6 +5,14 @@ class ApiClient {
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string> || {}),
     };
+    
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+    
     if (!(options.body instanceof FormData)) {
       headers["Content-Type"] = "application/json";
     }

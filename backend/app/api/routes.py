@@ -82,7 +82,8 @@ async def google_callback(
         await db.flush()
         
         access_token = create_access_token({"sub": user.id})
-        response = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        # Use auth/callback to support browsers that block third-party cookies (Brave, Safari)
+        response = RedirectResponse(url=f"{settings.frontend_url}/auth/callback?token={access_token}")
         is_cross_origin = "https://" in settings.frontend_url
         response.set_cookie(
             key="access_token",
@@ -178,7 +179,8 @@ async def github_callback(
         await db.flush()
         
         access_token = create_access_token({"sub": user.id})
-        response = RedirectResponse(url=f"{settings.frontend_url}/dashboard")
+        # Use auth/callback to support browsers that block third-party cookies (Brave, Safari)
+        response = RedirectResponse(url=f"{settings.frontend_url}/auth/callback?token={access_token}")
         is_cross_origin = "https://" in settings.frontend_url
         response.set_cookie(
             key="access_token",
